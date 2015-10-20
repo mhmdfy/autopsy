@@ -232,45 +232,8 @@ final class UserDefinedFileTypesManager {
      * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
-<<<<<<< HEAD
-        addFileTypeToMap(userDefinedFileTypes, fileType);
-        addFileTypeToMap(fileTypes, fileType);
-    }
-
-    /**
-     * Adds given FileType to given map: if the mimetype exists, add fileType to
-     * that mimetype's list. otherwise, create a new mimetype with the new
-     * fileType.
-     *
-     * @param map The map to be modified.
-     * @param fileType The added FileType
-     */
-    void addFileTypeToMap(Map<String, List<FileType>> map, FileType fileType) {
-        String mimeType = fileType.getMimeType();
-        if (map.containsKey(mimeType)) {
-            map.get(mimeType).add(fileType);
-        } else {
-            List<FileType> newList = new ArrayList<>();
-            newList.add(fileType);
-            map.put(mimeType, newList);
-        }
-    }
-
-    /**
-     * Removes given fileType from given map if it exists.
-     *
-     * @param map
-     * @param fileType
-     */
-    void removeFileTypeFromMap(Map<String, List<FileType>> map, FileType fileType) {
-        String mimeType = fileType.getMimeType();
-        if (map.containsKey(mimeType)) {
-            map.get(mimeType).remove(fileType);
-        }
-=======
         userDefinedFileTypes.add(fileType);
         fileTypes.add(fileType);
->>>>>>> aae1c2a8b5d9f3fa6b3c1d4f85aed98f37b2fd61
     }
 
     /**
