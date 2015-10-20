@@ -120,7 +120,8 @@ class FileType {
     public boolean equals(Object other) {
         if (other != null && other instanceof FileType) {
             FileType that = (FileType) other;
-            if (this.getMimeType().equals(that.getMimeType()) && this.getSignatures().equals(that.getSignatures())) {
+            if (this.getMimeType().equals(that.getMimeType()) && this.getSignatures().equals(that.getSignatures())
+                    && this.alertOnMatch() == that.alertOnMatch() && this.getFilesSetName().equals(that.getFilesSetName())) {
                 return true;
             }
         }
@@ -232,7 +233,10 @@ class FileType {
         public boolean equals(Object other) {
             if (other != null && other instanceof Signature) {
                 Signature that = (Signature) other;
-                if (Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes()) && this.getOffset() == that.getOffset()) {
+
+                if (Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes())
+                        && this.getOffset() == that.getOffset()
+                        && this.getType().equals(that.getType())) {
                     return true;
                 }
             }
