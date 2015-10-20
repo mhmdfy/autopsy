@@ -52,7 +52,7 @@ class FileType {
      */
     FileType(String mimeType, final List<Signature> signatures, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
-        this.signatures = new ArrayList<>(signatures); //Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        this.signatures = new ArrayList<>(signatures);
         this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
