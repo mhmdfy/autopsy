@@ -256,7 +256,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (null != fileType) {
             mimeTypeTextField.setText(fileType.getMimeType());
             mimeTypeTextField.setEditable(false);
-            Signature signature = fileType.getSignature();
+            java.util.List<Signature> signatures = fileType.getSignatures();
+            Signature signature = signatures.get(0);
             FileType.Signature.Type sigType = signature.getType();
             signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
             String signatureBytes;
@@ -642,7 +643,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          * Put it all together and reset the file types list component.
          */
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
-        FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
+        java.util.List<Signature> list = new ArrayList<>();
+        list.add(signature);
+        FileType fileType = new FileType(typeName, list, filesSetName, postHitCheckBox.isSelected());
         FileType selected = typesList.getSelectedValue();
         if (selected != null)
             UserDefinedFileTypesManager.getInstance().removeFileTypeFromMap(fileTypes, selected);

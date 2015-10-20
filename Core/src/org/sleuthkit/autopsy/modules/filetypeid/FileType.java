@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -33,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileType {
 
     private final String mimeType;
-    private final Signature signature;
+    private final List<Signature> signatures;
     private final String interestingFilesSetName;
     private final boolean alert;
 
@@ -41,16 +43,16 @@ class FileType {
      * Creates a representation of a file type characterized by a file
      * signature.
      *
-     * @param mimeType     The mime type to associate with this file type.
-     * @param signature    The signature that characterizes this file type.
+     * @param mimeType The mime type to associate with this file type.
+     * @param signature The signature that characterizes this file type.
      * @param filesSetName The name of an interesting files set that includes
-     *                     files of this type, may be the empty string.
-     * @param alert        Whether the user wishes to be alerted when a file
-     *                     matching this type is encountered.
+     * files of this type, may be the empty string.
+     * @param alert Whether the user wishes to be alerted when a file matching
+     * this type is encountered.
      */
-    FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
+    FileType(String mimeType, final List<Signature> signatures, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
-        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        this.signatures = new ArrayList<>(signatures); //Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
         this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
@@ -69,8 +71,8 @@ class FileType {
      *
      * @return The signature.
      */
-    Signature getSignature() {
-        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+    List<Signature> getSignatures() {
+        return new ArrayList<>(signatures);
     }
 
     /**
@@ -81,7 +83,12 @@ class FileType {
      * @return True or false.
      */
     boolean matches(final AbstractFile file) {
-        return signature.containedIn(file);
+        for (Signature signature : signatures) {
+            if (!signature.containedIn(file)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -103,19 +110,20 @@ class FileType {
     String getFilesSetName() {
         return interestingFilesSetName;
     }
-    
+
     @Override
     public String toString() {
         return this.mimeType;
     }
-    
+
     @Override
     public boolean equals(Object other) {
-        if(other != null && other instanceof FileType) {
+        if (other != null && other instanceof FileType) {
             FileType that = (FileType) other;
-            if(this.getMimeType().equals(that.getMimeType()) && this.getSignature().equals(that.getSignature()))
+            if (this.getMimeType().equals(that.getMimeType()) && this.getSignatures().equals(that.getSignatures())) {
                 return true;
-        }        
+            }
+        }
         return false;
     }
 
@@ -123,7 +131,7 @@ class FileType {
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.mimeType);
-        hash = 67 * hash + Objects.hashCode(this.signature);
+        hash = 67 * hash + Objects.hashCode(this.signatures);
         hash = 67 * hash + Objects.hashCode(this.interestingFilesSetName);
         hash = 67 * hash + (this.alert ? 1 : 0);
         return hash;
@@ -156,9 +164,9 @@ class FileType {
          * specific offset within a file.
          *
          * @param signatureBytes The signature bytes.
-         * @param offset         The offset of the signature bytes.
-         * @param type           The interpretation of the signature bytes
-         *                       (e.g., raw bytes, an ASCII string).
+         * @param offset The offset of the signature bytes.
+         * @param type The interpretation of the signature bytes (e.g., raw
+         * bytes, an ASCII string).
          */
         Signature(final byte[] signatureBytes, long offset, Type type) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -219,13 +227,14 @@ class FileType {
                 return false;
             }
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (other != null && other instanceof Signature) {
                 Signature that = (Signature) other;
-                if(Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes()) && this.getOffset() == that.getOffset())
+                if (Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes()) && this.getOffset() == that.getOffset()) {
                     return true;
+                }
             }
             return false;
         }

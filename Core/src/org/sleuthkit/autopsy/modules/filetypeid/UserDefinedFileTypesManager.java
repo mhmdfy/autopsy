@@ -181,11 +181,15 @@ final class UserDefinedFileTypesManager {
      */
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         try {
-            FileType fileTypeXml = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            List<Signature> list = new ArrayList<>();
+            list.add(new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII));
+            FileType fileTypeXml = new FileType("text/xml", list, "", false); //NON-NLS
             addFileTypeToMap(fileTypes, fileTypeXml);
 
             byte[] gzip = DatatypeConverter.parseHexBinary("1F8B08");
-            FileType fileTypeGzip = new FileType("application/x-gzip", new Signature(gzip, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            list.clear();
+            list.add(new Signature(gzip, 0L, FileType.Signature.Type.ASCII));
+            FileType fileTypeGzip = new FileType("application/x-gzip", list, "", false); //NON-NLS
             addFileTypeToMap(fileTypes, fileTypeGzip);
 
         } catch (UnsupportedEncodingException ex) {
@@ -236,9 +240,10 @@ final class UserDefinedFileTypesManager {
     }
 
     /**
-     * Adds given FileType to given map:
-     * if the mimetype exists, add fileType to that mimetype's list.
-     * otherwise, create a new mimetype with the new fileType.
+     * Adds given FileType to given map: if the mimetype exists, add fileType to
+     * that mimetype's list. otherwise, create a new mimetype with the new
+     * fileType.
+     *
      * @param map The map to be modified.
      * @param fileType The added FileType
      */
@@ -255,8 +260,9 @@ final class UserDefinedFileTypesManager {
 
     /**
      * Removes given fileType from given map if it exists.
+     *
      * @param map
-     * @param fileType 
+     * @param fileType
      */
     void removeFileTypeFromMap(Map<String, List<FileType>> map, FileType fileType) {
         String mimeType = fileType.getMimeType();
@@ -363,19 +369,22 @@ final class UserDefinedFileTypesManager {
          * @param doc The WC3 DOM object to use to create the XML.
          */
         private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
-            Signature signature = fileType.getSignature();
-            Element signatureElem = doc.createElement(SIGNATURE_TAG_NAME);
+            List<Signature> signatures = fileType.getSignatures();
 
-            Element bytesElem = doc.createElement(BYTES_TAG_NAME);
-            bytesElem.setTextContent(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
-            signatureElem.appendChild(bytesElem);
+            for (Signature signature : signatures) {
+                Element signatureElem = doc.createElement(SIGNATURE_TAG_NAME);
 
-            Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
-            offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
-            signatureElem.appendChild(offsetElem);
+                Element bytesElem = doc.createElement(BYTES_TAG_NAME);
+                bytesElem.setTextContent(DatatypeConverter.printHexBinary(signature.getSignatureBytes()));
+                signatureElem.appendChild(bytesElem);
 
-            signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
-            fileTypeElem.appendChild(signatureElem);
+                Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
+                offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
+                signatureElem.appendChild(offsetElem);
+
+                signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
+                fileTypeElem.appendChild(signatureElem);
+            }
         }
 
         /**
@@ -447,10 +456,10 @@ final class UserDefinedFileTypesManager {
          */
         private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
             String mimeType = XmlReader.parseMimeType(fileTypeElem);
-            Signature signature = XmlReader.parseSignature(fileTypeElem);
+            List<Signature> signatures = XmlReader.parseSignatures(fileTypeElem);
             String filesSetName = XmlReader.parseInterestingFilesSet(fileTypeElem);
             boolean alert = XmlReader.parseAlert(fileTypeElem);
-            return new FileType(mimeType, signature, filesSetName, alert);
+            return new FileType(mimeType, signatures, filesSetName, alert);
         }
 
         /**
@@ -471,20 +480,24 @@ final class UserDefinedFileTypesManager {
          *
          * @return The signature.
          */
-        private static Signature parseSignature(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
+        private static List<Signature> parseSignatures(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
             NodeList signatureElems = fileTypeElem.getElementsByTagName(SIGNATURE_TAG_NAME);
-            Element signatureElem = (Element) signatureElems.item(0);
+            List<Signature> list = new ArrayList<>();
+            for (int i = 0; i < signatureElems.getLength(); i++) {
+                Element signatureElem = (Element) signatureElems.item(i);
 
-            String sigTypeAttribute = signatureElem.getAttribute(SIGNATURE_TYPE_ATTRIBUTE);
-            Signature.Type signatureType = Signature.Type.valueOf(sigTypeAttribute);
+                String sigTypeAttribute = signatureElem.getAttribute(SIGNATURE_TYPE_ATTRIBUTE);
+                Signature.Type signatureType = Signature.Type.valueOf(sigTypeAttribute);
 
-            String sigBytesString = getChildElementTextContent(signatureElem, BYTES_TAG_NAME);
-            byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
+                String sigBytesString = getChildElementTextContent(signatureElem, BYTES_TAG_NAME);
+                byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
 
-            String offsetString = getChildElementTextContent(signatureElem, OFFSET_TAG_NAME);
-            long offset = DatatypeConverter.parseLong(offsetString);
+                String offsetString = getChildElementTextContent(signatureElem, OFFSET_TAG_NAME);
+                long offset = DatatypeConverter.parseLong(offsetString);
 
-            return new Signature(signatureBytes, offset, signatureType);
+                list.add(new Signature(signatureBytes, offset, signatureType));
+            }
+            return list;
         }
 
         /**
